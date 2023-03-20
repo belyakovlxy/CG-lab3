@@ -1,5 +1,7 @@
 
 let gl = null;
+
+
 function initWebGl(canvas)
 {
     gl = canvas.getContext("webgl");
