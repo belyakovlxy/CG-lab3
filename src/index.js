@@ -104,22 +104,14 @@ function getCenterRadiusY(matrix)
     return Math.sqrt(Math.pow(matrix[12], 2) + Math.pow(matrix[14], 2))
 }
 
-function  getCurrentAngle(matrix)
+function getCurrentAngleRelativelyMatrix(matrix, point)
 {
-    if (matrix[14] == 0 && matrix[12] > 0)
-        return 0;
-    else if (matrix[14] == 0 && matrix[12] < 0)
-        return 180;
-    else if (matrix[12] == 0 && matrix[14] > 0)
-        return 90;
-    else if (matrix[12] == 0 && matrix[14] < 0)
-        return -90;
+    x = matrix[12] - point[0]
+    y = matrix[13] - point[1]
+    z = matrix[14] - point[2]
 
-    let ang = getDegreeAngle(Math.atan(matrix[14] / matrix[12]));
-    if (matrix[12] > 0)
-        return ang;
-    else if (matrix[12] < 0)
-        return 180 + ang;
+    let a = Math.atan2(x, z) * ( 180 / Math.PI )
+    return a
 }
 
 function getTranslationVec3(rad, angle, posX, posY, posZ)
@@ -127,9 +119,9 @@ function getTranslationVec3(rad, angle, posX, posY, posZ)
     return [rad * Math.cos(getRadAngle(angle)) + posX, 0 + posY, rad * Math.sin(getRadAngle(angle)) + posZ]
 }
 
-let rad;
-let ang;
-
+currentRotationAngle = getCurrentAngleRelativelyMatrix(leftCubeWMatx, [botCubeWMatx[12], botCubeWMatx[13], botCubeWMatxStart[14]])
+let currentCubeAngle = 0
+let kek = 0;
 document.addEventListener('keydown', (event) => {
     let name = event.key;
     let code = event.code;
@@ -139,11 +131,13 @@ document.addEventListener('keydown', (event) => {
         glMatrix.mat4.rotate(topCubeWMatx, topCubeWMatx, getRadAngle(rotAngle), [0, 1, 0]);
         glMatrix.mat4.rotate(botCubeWMatx, botCubeWMatx, getRadAngle(rotAngle), [0, 1, 0]);
 
-        glMatrix.mat4.translate(leftCubeWMatx, identityMatrix, getTranslationVec3(norm, -currentPositionAngle, posX, posY, posZ));
-        glMatrix.mat4.rotate(leftCubeWMatx, leftCubeWMatx, getRadAngle(currentRotationAngle), [0, 1, 0]);
+        glMatrix.mat4.copy(leftCubeWMatx, botCubeWMatx);
+        glMatrix.mat4.translate(leftCubeWMatx, leftCubeWMatx, getTranslationVec3(2, 0 + currentCubeAngle, 0, 0, 0))
 
-        glMatrix.mat4.translate(rightCubeWMatx, identityMatrix, getTranslationVec3(norm, 180-currentPositionAngle, posX, posY, posZ));
-        glMatrix.mat4.rotate(rightCubeWMatx, rightCubeWMatx, getRadAngle(currentRotationAngle), [0, 1, 0]);
+        glMatrix.mat4.copy(rightCubeWMatx, botCubeWMatx);
+        glMatrix.mat4.translate(rightCubeWMatx, rightCubeWMatx, getTranslationVec3(2, 180 + currentCubeAngle , 0, 0, 0))
+        console.log(getCurrentAngleRelativelyMatrix(leftCubeWMatx, botCubeWMatx))
+        console.log(getCurrentAngleRelativelyMatrix(rightCubeWMatx, botCubeWMatx))
     }
 
     function rotateEachCube(rotAngle)
@@ -155,58 +149,41 @@ document.addEventListener('keydown', (event) => {
     }
 
 
+    function rotateAroundOy(rotAngle)
+    {
+        a = getCurrentAngleRelativelyMatrix(botCubeWMatx, [0,0,0])
+        r = getCenterRadiusY(botCubeWMatx)
+        kek = kek + rotAngle
+        newCoordinates = getTranslationVec3(r, kek, 0, 0, 0)
+        console.log(newCoordinates)
+        //move = [newCoordinates[0] - botCubeWMatx[12], 0, newCoordinates[2] - botCubeWMatx[14]]
+        //console.log(botCubeWMatx[12], botCubeWMatx[13], botCubeWMatx[14], move, newCoordinates)
+        //glMatrix.mat4.translate(botCubeWMatx, botCubeWMatx, move)
+    }
+
     if (name == "w")
     {
-        currentRotationAngle -= 5;
-        currentPositionAngle -= 5;
         rotateWholePedestal(-rotAngle);
 
     }
     if (name == "e")
     {
-        currentRotationAngle += 5;
-        currentPositionAngle += 5;
         rotateWholePedestal(rotAngle);
     }
     if (name == "s")
     {
-        currentRotationAngle += 5;
+        currentCubeAngle += rotAngle
         rotateEachCube(rotAngle)
     }
     if (name == "d")
     {
-        currentRotationAngle -= 5;
+        currentCubeAngle -= rotAngle
         rotateEachCube(-rotAngle)
     }
 
     if (name == "x")
     {
-        currentCenterAngle += rotAngle;
-
-        rad = getCenterRadiusY(topCubeWMatxStart);
-        ang = getCurrentAngle(topCubeWMatxStart);
-        console.log(ang);
-        glMatrix.mat4.translate(topCubeWMatx, identityMatrix, getTranslationVec3(rad, -currentCenterAngle - ang, 0, 0 + topCubeWMatxStart[13], 0));
-        glMatrix.mat4.rotate(topCubeWMatx, topCubeWMatx, getRadAngle(currentCenterAngle + currentRotationAngle), [0, 1, 0]);
-
-        rad = getCenterRadiusY(botCubeWMatxStart);
-        ang = getCurrentAngle(botCubeWMatxStart);
-        console.log(ang);
-        glMatrix.mat4.translate(botCubeWMatx, identityMatrix, getTranslationVec3(rad, -currentCenterAngle - ang, 0, 0 + botCubeWMatxStart[13], 0));
-        glMatrix.mat4.rotate(botCubeWMatx, botCubeWMatx, getRadAngle(currentCenterAngle + currentRotationAngle), [0, 1, 0]);
-
-        rad = getCenterRadiusY(leftCubeWMatxStart);
-        ang = getCurrentAngle(leftCubeWMatxStart);
-        console.log(ang);
-        glMatrix.mat4.translate(leftCubeWMatx, identityMatrix, getTranslationVec3(rad, -currentCenterAngle - ang, 0, 0 + leftCubeWMatxStart[13], 0));
-        glMatrix.mat4.rotate(leftCubeWMatx, leftCubeWMatx, getRadAngle(currentCenterAngle + currentRotationAngle), [0, 1, 0]);
-
-        rad = getCenterRadiusY(rightCubeWMatxStart);
-        ang = getCurrentAngle(rightCubeWMatxStart);
-        console.log(ang);
-        glMatrix.mat4.translate(rightCubeWMatx, identityMatrix, getTranslationVec3(rad, -currentCenterAngle - ang, 0, 0 + rightCubeWMatxStart[13], 0));
-        glMatrix.mat4.rotate(rightCubeWMatx, rightCubeWMatx, getRadAngle(currentCenterAngle + currentRotationAngle), [0, 1, 0]);
-        
+        rotateAroundOy(rotAngle)
     }
     if (name == "c")
     {
