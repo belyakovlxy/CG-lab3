@@ -99,9 +99,14 @@ gl.uniformMatrix4fv(matProjLocationCube, false, projMatrixCube);
 
 gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+function floor5 (number)
+{
+    return Math.floor(number * 100000) / 100000
+}
+
 function getCenterRadiusY(matrix)
 {
-    return Math.sqrt(Math.pow(matrix[12], 2) + Math.pow(matrix[14], 2))
+    return Math.floor(Math.sqrt(matrix[12] * matrix[12] + matrix[14] * matrix[14]) * 100000) / 100000;
 }
 
 function getCurrentAngleRelativelyMatrix(matrix, point)
@@ -110,7 +115,7 @@ function getCurrentAngleRelativelyMatrix(matrix, point)
     y = matrix[13] - point[1]
     z = matrix[14] - point[2]
 
-    let a = Math.atan2(x, z) * ( 180 / Math.PI )
+    let a = Math.atan2(z, x) * ( 180 / Math.PI )
     return a
 }
 
@@ -148,17 +153,24 @@ document.addEventListener('keydown', (event) => {
         glMatrix.mat4.rotate(rightCubeWMatx, rightCubeWMatx, getRadAngle(rotAngle), [0, 1, 0]);
     }
 
+    function rotateCubeAroundOy(cubeMatrix, rotAngle)
+    {
+        a = getCurrentAngleRelativelyMatrix(cubeMatrix, [0,0,0])
+        r = getCenterRadiusY(cubeMatrix)
+
+        newCoordinates = getTranslationVec3(r, a + rotAngle, 0, 0, 0)
+        cubeMatrix[12] = newCoordinates[0]
+        cubeMatrix[14] = newCoordinates[2]
+    
+        glMatrix.mat4.rotate(cubeMatrix, cubeMatrix, getRadAngle(-rotAngle), [0, 1, 0])
+    }
 
     function rotateAroundOy(rotAngle)
     {
-        a = getCurrentAngleRelativelyMatrix(botCubeWMatx, [0,0,0])
-        r = getCenterRadiusY(botCubeWMatx)
-        kek = kek + rotAngle
-        newCoordinates = getTranslationVec3(r, kek, 0, 0, 0)
-        console.log(newCoordinates)
-        //move = [newCoordinates[0] - botCubeWMatx[12], 0, newCoordinates[2] - botCubeWMatx[14]]
-        //console.log(botCubeWMatx[12], botCubeWMatx[13], botCubeWMatx[14], move, newCoordinates)
-        //glMatrix.mat4.translate(botCubeWMatx, botCubeWMatx, move)
+        rotateCubeAroundOy(botCubeWMatx, rotAngle)
+        rotateCubeAroundOy(topCubeWMatx, rotAngle)
+        rotateCubeAroundOy(leftCubeWMatx, rotAngle)
+        rotateCubeAroundOy(rightCubeWMatx, rotAngle)
     }
 
     if (name == "w")
