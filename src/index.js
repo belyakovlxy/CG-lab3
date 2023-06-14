@@ -138,13 +138,15 @@ gl.uniform3fv(sourceSpecularColorLocation, sourceSpecularColor);
 
 let shininess = 100;
 let cubeColor = glMatrix.vec3.create();
+let ambientColor = glMatrix.vec3.fromValues(0.3, 0.3, 0.3);
 
 let cubeColorLocation = gl.getUniformLocation(shaderProgram, "cubeColor");
 let shininessLocation = gl.getUniformLocation(shaderProgram, "u_shininess");
+let ambientColorLocation = gl.getUniformLocation(shaderProgram, "u_sourceAmbientColor");
 
 gl.uniform1f(shininessLocation, shininess);
 gl.uniform3fv(cubeColorLocation,  cubeColor);
-
+gl.uniform3fv(ambientColorLocation, ambientColor);
 
 
 //-------------------------SHADING--SETTINGS-------------------------------------------------
@@ -342,8 +344,13 @@ document.addEventListener('keydown', (event) => {
     {
         glMatrix.vec3.set(sourceDiffuseColor, sourceDiffuseColor[0] + sourceColorStep, sourceDiffuseColor[1] + sourceColorStep, sourceDiffuseColor[2] + sourceColorStep);
         checkColor(sourceDiffuseColor);
-        console.log("Source Diffuse Color - ", sourceDiffuseColor[0], sourceDiffuseColor);
+        console.log("Source Diffuse Color - ", sourceDiffuseColor[0]);
         gl.uniform3fv(sourceDiffuseColorLocation, sourceDiffuseColor);
+
+        glMatrix.vec3.set(sourceSpecularColor, sourceSpecularColor[0] + sourceColorStep, sourceSpecularColor[1] + sourceColorStep, sourceSpecularColor[2] + sourceColorStep);
+        checkColor(sourceSpecularColor);
+        console.log("Source Specular Color - ", sourceSpecularColor[0]);
+        gl.uniform3fv(sourceSpecularColorLocation, sourceSpecularColor);
     }
     if (name == "g")
     {
@@ -351,22 +358,27 @@ document.addEventListener('keydown', (event) => {
         checkColor(sourceDiffuseColor);
         console.log("Source Diffuse Color - ", sourceDiffuseColor[0]);
         gl.uniform3fv(sourceDiffuseColorLocation, sourceDiffuseColor);
-    }
 
-    if (name == "v")
-    {
-        glMatrix.vec3.set(sourceSpecularColor, sourceSpecularColor[0] + sourceColorStep, sourceSpecularColor[1] + sourceColorStep, sourceSpecularColor[2] + sourceColorStep);
-        checkColor(sourceSpecularColor);
-        console.log("Source Specular Color - ", sourceSpecularColor[0], sourceSpecularColor);
-        gl.uniform3fv(sourceSpecularColorLocation, sourceSpecularColor);
-    }
-
-    if (name == "b")
-    {
         glMatrix.vec3.set(sourceSpecularColor, sourceSpecularColor[0] - sourceColorStep, sourceSpecularColor[1] - sourceColorStep, sourceSpecularColor[2] - sourceColorStep);
         checkColor(sourceSpecularColor);
         console.log("Source Specular Color - ", sourceSpecularColor[0]);
         gl.uniform3fv(sourceSpecularColorLocation, sourceSpecularColor);
+    }
+
+    if (name == "v")
+    {
+        glMatrix.vec3.set(ambientColor, ambientColor[0] + sourceColorStep, ambientColor[1] + sourceColorStep, ambientColor[2] + sourceColorStep);
+        checkColor(ambientColor);
+        console.log("Source Ambient Color - ", ambientColor[0]);
+        gl.uniform3fv(ambientColorLocation, ambientColor);
+    }
+
+    if (name == "b")
+    {
+        glMatrix.vec3.set(ambientColor, ambientColor[0] - sourceColorStep, ambientColor[1] - sourceColorStep, ambientColor[2] - sourceColorStep);
+        checkColor(ambientColor);
+        console.log("Source Ambient Color - ", ambientColor[0]);
+        gl.uniform3fv(ambientColorLocation, ambientColor);
     }
 
     // ---------------------------------------SHADING--CONTROLS---------------------------------------------
