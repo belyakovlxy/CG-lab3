@@ -2,6 +2,36 @@
 let gl = null;
 
 
+function toFloatColor(intColor)
+{
+    if (intColor < 0)
+        return 0.0;
+    else if (intColor > 255)
+        return 1.0;
+    else
+        return  intColor / 255;
+}
+
+function getNormalMatrix(ModelMatrix)
+{
+    let normalMatrix = glMatrix.mat4.create();
+    glMatrix.mat4.invert(normalMatrix, ModelMatrix);
+    glMatrix.mat4.transpose(normalMatrix, normalMatrix);
+    return normalMatrix;
+}
+
+function getNormalByPoints(x1, y1, z1, x2, y2, z2, x3, y3, z3)
+{
+    let AB = glMatrix.vec3.fromValues(x1 - x2, y1 - y2, z1 - z2);
+    let BC = glMatrix.vec3.fromValues(x3 - x2, y3 - y2, z3 - z2);
+
+    let normal = glMatrix.vec3.create();
+    glMatrix.vec3.cross(normal, AB, BC);
+    glMatrix.vec3.normalize(normal, normal);
+
+    return normal;
+}
+
 function initWebGl(canvas)
 {
     gl = canvas.getContext("webgl");
