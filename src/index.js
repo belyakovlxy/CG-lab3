@@ -59,8 +59,8 @@ gl.useProgram(shaderProgram);
 //
 
 initBuffer(gl, cubeVertices, gl.ARRAY_BUFFER, Float32Array);
+console.log(gl.getParameter(gl.ARRAY_BUFFER_BINDING))
 initBuffer(gl, cubeIndices, gl.ELEMENT_ARRAY_BUFFER, Uint16Array);
-
 
 //
 //  Set buffer data to attributes
@@ -69,24 +69,29 @@ initBuffer(gl, cubeIndices, gl.ELEMENT_ARRAY_BUFFER, Uint16Array);
 let positionAttribLocationCube = enableVertexAttrib(
     shaderProgram,
     "vertPositions",
-    3, 9, 0);
+    3, 11, 0);
 gl.enableVertexAttribArray(positionAttribLocationCube);
 
 let colorAttribLocationCube = enableVertexAttrib(
     shaderProgram,
     "vertColor",
-    3, 9, 3);
+    3, 11, 3);
 gl.enableVertexAttribArray(colorAttribLocationCube);
 
 let normalAttribLocationCube = enableVertexAttrib(
     shaderProgram,
     "vertNormal",
-    3, 9, 6);
+    3, 11, 6);
 gl.enableVertexAttribArray(normalAttribLocationCube);
 
 
+console.log(gl.getParameter(gl.ARRAY_BUFFER_BINDING))
 
-
+let textureAttribLocation = enableVertexAttrib(
+    shaderProgram,
+    "vertTexCoords",
+    2, 11, 9);
+gl.enableVertexAttribArray(textureAttribLocation);
 
 
 //--------------------------WORLD--VIEW--PROJECTION--MATRIСES-------------------------------
@@ -136,6 +141,10 @@ gl.uniform3fv(sourceSpecularColorLocation, sourceSpecularColor);
 
 //---------------------------COLOR--SETTINGS------------------------------------------------
 
+let coefColor = 1.0;
+let coefColorLocation = gl.getUniformLocation(shaderProgram, "u_coefColor");
+gl.uniform1f(coefColorLocation, coefColor);
+
 let shininess = 100;
 let cubeColor = glMatrix.vec3.create();
 let ambientColor = glMatrix.vec3.fromValues(0.3, 0.3, 0.3);
@@ -147,6 +156,40 @@ let ambientColorLocation = gl.getUniformLocation(shaderProgram, "u_sourceAmbient
 gl.uniform1f(shininessLocation, shininess);
 gl.uniform3fv(cubeColorLocation,  cubeColor);
 gl.uniform3fv(ambientColorLocation, ambientColor);
+
+
+//--------------------------TEXTURE--SETTINGS------------------------------------------------
+
+let blended = false;
+let blendedLocation = gl.getUniformLocation(shaderProgram, "u_blended");
+gl.uniform1i(blendedLocation, blended);
+
+let coefTex = 1.0;
+let coefTexLocation = gl.getUniformLocation(shaderProgram, "u_coefTex");
+gl.uniform1f(coefTexLocation, coefTex);
+
+shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "u_sampler1");
+gl.uniform1i(shaderProgram.samplerUniform, 0);
+
+shaderProgram.samplerUniform2 = gl.getUniformLocation(shaderProgram, "u_sampler2");
+gl.uniform1i(shaderProgram.samplerUniform2, 1);
+
+
+let imgURL1 = "src//textures//1.png";
+let imgURL2 = "src//textures//2.png";
+let imgURL3 = "src//textures//3.png";
+
+let imgURL4 = "src//textures//pack1.jpg";
+let imgURL5 = "src//textures//pack2.jpg";
+let imgURL6 = "src//textures//pack3.jpg";
+
+let tex1 = getTexture(imgURL1);
+let tex2 = getTexture(imgURL2);
+let tex3 = getTexture(imgURL3);
+
+let texPack1 = getTexture(imgURL4);
+let texPack2 = getTexture(imgURL5);
+let texPack3 = getTexture(imgURL6);
 
 
 //-------------------------SHADING--SETTINGS-------------------------------------------------
@@ -408,6 +451,44 @@ document.addEventListener('keydown', (event) => {
         changeShading(isToon, isToonLocation, "Is Toon - ")
     }
 
+    //---------------------------------TEXTURE--CONTROLS-------------------------
+    if (name == "h")
+    {
+        coefTex += 0.05;
+        coefTex = Math.max(coefTex, 0.0);
+        coefTex = Math.min(coefTex, 1.0);
+        gl.uniform1f(coefTexLocation, coefTex);
+    }
+
+    if (name == "j")
+    {
+        coefTex -= 0.05;
+        coefTex = Math.max(coefTex, 0.0);
+        coefTex = Math.min(coefTex, 1.0);
+        gl.uniform1f(coefTexLocation, coefTex);
+    }
+
+    if (name == "n")
+    {
+        coefColor += 0.05;
+        coefColor = Math.max(coefColor, 0.0);
+        coefColor = Math.min(coefColor, 1.0);
+        gl.uniform1f(coefColorLocation, coefColor);
+    }
+
+    if (name == "m")
+    {
+        coefColor -= 0.05;
+        coefColor = Math.max(coefColor, 0.0);
+        coefColor = Math.min(coefColor, 1.0);
+        gl.uniform1f(coefColorLocation, coefColor);
+    }
+    if (name == ",")
+    {
+        blended = !blended;
+        gl.uniform1i(blendedLocation, blended);
+    }
+
 }, false);
 
 function changeShading(uniform, location, text)
@@ -436,6 +517,7 @@ function nullShadings()
     gl.uniform1f(isToonLocation, isToon);
 }
 
+
 let loop = () =>
 
 {
@@ -447,13 +529,21 @@ let loop = () =>
     gl.uniformMatrix4fv(matWorldLocationCube, false, worldMatrixCube);
     glMatrix.vec3.set(cubeColor, toFloatColor(219), toFloatColor(172), toFloatColor(52))
     gl.uniform3fv(cubeColorLocation,  cubeColor);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, tex1);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, texPack1);
+
     gl.drawElements(gl.TRIANGLES, cubeIndices.length, gl.UNSIGNED_SHORT, 0);
 
     glMatrix.mat4.copy(worldMatrixCube, botCubeWMatx);
     normalMatrix = getNormalMatrix(worldMatrixCube);
     gl.uniformMatrix4fv(normalmatrixLocation, false, normalMatrix);
     gl.uniformMatrix4fv(matWorldLocationCube, false, worldMatrixCube);
+
     gl.drawElements(gl.TRIANGLES, cubeIndices.length, gl.UNSIGNED_SHORT, 0);
+
 
     glMatrix.mat4.copy(worldMatrixCube, leftCubeWMatx);
     normalMatrix = getNormalMatrix(worldMatrixCube);
@@ -461,7 +551,14 @@ let loop = () =>
     gl.uniformMatrix4fv(matWorldLocationCube, false, worldMatrixCube);
     glMatrix.vec3.set(cubeColor, toFloatColor(192), toFloatColor(192), toFloatColor(192))
     gl.uniform3fv(cubeColorLocation,  cubeColor);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, tex2);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, texPack2);
+
     gl.drawElements(gl.TRIANGLES, cubeIndices.length, gl.UNSIGNED_SHORT, 0);
+
 
     glMatrix.mat4.copy(worldMatrixCube, rightCubeWMatx);
     normalMatrix = getNormalMatrix(worldMatrixCube);
@@ -469,6 +566,12 @@ let loop = () =>
     gl.uniformMatrix4fv(matWorldLocationCube, false, worldMatrixCube);
     glMatrix.vec3.set(cubeColor, toFloatColor(205), toFloatColor(127), toFloatColor(50))
     gl.uniform3fv(cubeColorLocation,  cubeColor);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, tex3);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, texPack3);
+
     gl.drawElements(gl.TRIANGLES, cubeIndices.length, gl.UNSIGNED_SHORT, 0);
     requestAnimationFrame(loop);
 }

@@ -4,10 +4,12 @@ let vsSource =
         'attribute vec3 vertPositions;',
         'attribute vec3 vertColor;',
         'attribute vec3 vertNormal;',
+        'attribute vec2 vertTexCoords;',
 
         'varying vec3 fragColor;',
         'varying vec3 fragPosition;',
         'varying vec3 fragNormal;',
+        'varying vec2 fragTexCoords;',
         '',
         'uniform mat4 mWorld;',
         'uniform mat4 mView;',
@@ -27,7 +29,7 @@ let vsSource =
         '',
         'void main()',
         '{',
-
+            'fragTexCoords = vertTexCoords;',
         '   gl_Position = mProj * mView * mWorld * vec4(vertPositions, 1.0);',
         '',
             'vec3 N = normalize(vertNormal);',
@@ -64,6 +66,7 @@ let fsSource =
         'varying vec3 fragColor;',
         'varying vec3 fragPosition;',
         'varying vec3 fragNormal;',
+        'varying vec2 fragTexCoords;',
         '',
         'uniform vec3 u_viewDirection;',
         'uniform vec3 u_sourceDirection;',
@@ -77,6 +80,13 @@ let fsSource =
         'uniform vec3 u_sourceDiffuseColor;',
         'uniform vec3 u_sourceSpecularColor;',
         'uniform vec3 u_sourceAmbientColor;',
+
+        'uniform float u_coefTex;',
+        'uniform float u_coefColor;',
+        'uniform bool u_blended;',
+
+        'uniform sampler2D u_sampler1;',
+        'uniform sampler2D u_sampler2;',
         '',
         'const vec3 rimColor = vec3(1.0, 1.0, 1.0);',
         'const float rimAmount = 0.716;',
@@ -85,15 +95,6 @@ let fsSource =
         'void main()',
         '{',
             'vec3 color = vec3(0.0, 0.0, 0.0);',
-            'if (u_isLambert)',
-            '{',
-                'color = fragColor;',
-            '}',
-            '',
-            'if (u_isGouraud)',
-            '{',
-                'color = fragColor;',
-            '}',
             'vec3 lightDir = normalize(u_sourceDirection - fragPosition);',
             'vec3 viewDir = normalize(u_viewDirection);',
             'float spec = 0.0;',
@@ -122,23 +123,33 @@ let fsSource =
                 '//float rimIntensity = smoothstep(rimAmount - 0.01, rimAmount + 0.01, rimDot);',
                 '//vec3 rim = rimIntensity * rimColor;',
 
-                'color = (lightIntensity + u_sourceAmbientColor + specularIntensitySmooth * u_sourceSpecularColor ) * fragColor;',
+                'color = (lightIntensity + u_sourceAmbientColor + specularIntensitySmooth * u_sourceSpecularColor );',
             '}',
 
             'if (u_isBlinn)',
             '{',
                 'vec3 halfwayDir = normalize(lightDir + viewDir);',
                 'spec = pow(max(dot(fragNormal, halfwayDir), 0.0), u_shininess * u_shininess);',
-                'color = (spec * u_sourceSpecularColor + u_sourceAmbientColor + u_sourceDiffuseColor * max(0.0,dot(fragNormal,lightDir))) * fragColor;',
+                'color = (spec * u_sourceSpecularColor + u_sourceAmbientColor + u_sourceDiffuseColor * max(0.0,dot(fragNormal,lightDir)));',
             '}',
             'if (u_isPhong)',
             '{',
                 'vec3 reflectDir = normalize(reflect(-lightDir,fragNormal));',
                 'spec = pow(max(dot(viewDir,reflectDir), 0.0), u_shininess * u_shininess);',
-                'color = (spec * u_sourceSpecularColor + u_sourceAmbientColor + u_sourceDiffuseColor * max(0.0,dot(fragNormal,lightDir))) * fragColor;',
+                'color = (spec * u_sourceSpecularColor + u_sourceAmbientColor + u_sourceDiffuseColor * max(0.0,dot(fragNormal,lightDir)));',
             '}',
         '',
+            'if (u_blended)' +
+            '{' +
+                'vec4 texColor = texture2D(u_sampler1, fragTexCoords) * texture2D(u_sampler2, fragTexCoords);' +
+                'gl_FragColor = vec4(color, 1.0) * texColor * vec4(fragColor, 1.0);' +
+            '}' +
+            'else' +
+            '{' +
+                'vec4 texColor = (1.0 - u_coefTex) * texture2D(u_sampler1, fragTexCoords) + u_coefTex * texture2D(u_sampler2, fragTexCoords);' +
+                'gl_FragColor = vec4(color, 1.0) * ((1.0 - u_coefColor) * texColor + u_coefColor * vec4(fragColor, 1.0));' +
+            '}',
 
-            'gl_FragColor = vec4(color, 1.0);',
+
         '}',
     ].join('\n');
