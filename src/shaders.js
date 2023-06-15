@@ -99,6 +99,16 @@ let fsSource =
             'vec3 viewDir = normalize(u_viewDirection);',
             'float spec = 0.0;',
 
+            'if (u_isLambert)',
+            '{',
+                'color = fragColor;',
+            '}',
+            '',
+            'if (u_isGouraud)',
+            '{',
+                'color = fragColor;',
+            '}',
+
             'if (u_isToon)',
             '{',
                 'float NdotL = dot(fragNormal,lightDir);',
